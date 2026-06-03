@@ -1,24 +1,54 @@
-import { supabaseAdmin, createClientForUser } from './../config/supabase.js';
+import { supabaseAdmin } from './../config/supabase.js';
+
+// Helper function untuk join data profile ke satu objek package (Single Hydration)
+async function hydratePackageProfile(pkg) {
+  if (!pkg) return null;
+  if (!pkg.user_id) {
+    pkg.profiles = null;
+    return pkg;
+  }
+
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('id, full_name, avatar_url')
+    .eq('id', pkg.user_id)
+    .single();
+
+  pkg.profiles = profile || null;
+  return pkg;
+}
 
 export const packageService = {
   // ==========================================
-  // USER SERVICES (Pake User Client + RLS)
+  // USER SERVICES (Sudah Otomatis Join Profile)
   // ==========================================
   
-  async getMyPackages(token) {
-    const supabase = createClientForUser(token);
-    const { data, error } = await supabase
+  async getMyPackages(userId) {
+    const { data: packages, error } = await supabaseAdmin
       .from('packages')
       .select('*')
+      .eq('user_id', userId)
       .order('name', { ascending: true });
 
     if (error) throw error;
-    return data;
+    if (!packages || packages.length === 0) return [];
+
+    // Join profiles secara massal (In-Memory)
+    const { data: profiles } = await supabaseAdmin
+      .from('profiles')
+      .select('id, full_name, avatar_url')
+      .eq('id', userId);
+
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+    return packages.map(pkg => ({
+      ...pkg,
+      profiles: profileMap.get(pkg.user_id) || null
+    }));
   },
 
-  async createMyPackage(token, userId, packageData) {
-    const supabase = createClientForUser(token);
-    const { data, error } = await supabase
+  async createMyPackage(userId, packageData) {
+    const { data, error } = await supabaseAdmin
       .from('packages')
       .insert({
         name: packageData.name,
@@ -27,18 +57,19 @@ export const packageService = {
         description: packageData.description || null,
         privileges: packageData.privileges || {},
         is_promo: packageData.is_promo || false,
-        user_id: userId // RLS memastikan harus sesuai auth.uid()
+        user_id: userId
       })
       .select()
       .single();
 
     if (error) throw error;
-    return data;
+    
+    // Langsung join profile pembuatnya sebelum dilempar ke Next.js
+    return await hydratePackageProfile(data);
   },
 
-  async updateMyPackage(token, packageId, updates) {
-    const supabase = createClientForUser(token);
-    const { data, error } = await supabase
+  async updateMyPackage(packageId, userId, updates) {
+    const { data, error } = await supabaseAdmin
       .from('packages')
       .update({
         name: updates.name,
@@ -49,30 +80,32 @@ export const packageService = {
         is_promo: updates.is_promo
       })
       .eq('id', packageId)
+      .eq('user_id', userId) 
       .select()
       .single();
 
     if (error) throw error;
-    return data;
+    
+    // Langsung join profile setelah update sukses
+    return await hydratePackageProfile(data);
   },
 
-  async deleteMyPackage(token, packageId) {
-    const supabase = createClientForUser(token);
-    const { error } = await supabase
+  async deleteMyPackage(packageId, userId) {
+    const { error } = await supabaseAdmin
       .from('packages')
       .delete()
-      .eq('id', packageId);
+      .eq('id', packageId)
+      .eq('user_id', userId);
 
     if (error) throw error;
     return { success: true };
   },
 
   // ==========================================
-  // ADMIN SERVICES (Pake Admin Client + In-Memory Hydration)
+  // ADMIN SERVICES (Sudah Otomatis Join Profile)
   // ==========================================
   
   async getAllPackages() {
-    // 1. Tarik semua data packages dari seluruh user
     const { data: packages, error } = await supabaseAdmin
       .from('packages')
       .select('*')
@@ -81,10 +114,8 @@ export const packageService = {
     if (error) throw error;
     if (!packages || packages.length === 0) return [];
 
-    // 2. Ambil semua unique user_id dari list packages
     const userIds = [...new Set(packages.map(p => p.user_id).filter(Boolean))];
 
-    // 3. Tarik data profiles penyertanya jika ada owner-nya
     let profileMap = new Map();
     if (userIds.length > 0) {
       const { data: profiles, error: profileError } = await supabaseAdmin
@@ -96,7 +127,6 @@ export const packageService = {
       profileMap = new Map(profiles.map(prof => [prof.id, prof]));
     }
 
-    // 4. Gabungkan datanya (Hydrate)
     return packages.map(pkg => ({
       ...pkg,
       profiles: profileMap.get(pkg.user_id) || null
@@ -111,20 +141,7 @@ export const packageService = {
       .single();
       
     if (error) throw error;
-    if (!pkg) return null;
-
-    if (pkg.user_id) {
-      const { data: profile } = await supabaseAdmin
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .eq('id', pkg.user_id)
-        .single();
-      pkg.profiles = profile || null;
-    } else {
-      pkg.profiles = null;
-    }
-    
-    return pkg;
+    return await hydratePackageProfile(pkg);
   },
 
   async createPackageByAdmin(packageData) {
@@ -137,13 +154,13 @@ export const packageService = {
         description: packageData.description || null,
         privileges: packageData.privileges || {},
         is_promo: packageData.is_promo || false,
-        user_id: packageData.user_id || null // Admin bisa membuatkan paket atas nama user lain / sistem global
+        user_id: packageData.user_id || null
       })
       .select()
       .single();
 
     if (error) throw error;
-    return data;
+    return await hydratePackageProfile(data);
   },
 
   async updatePackageByAdmin(id, updates) {
@@ -155,7 +172,7 @@ export const packageService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return await hydratePackageProfile(data);
   },
 
   async deletePackageByAdmin(id) {

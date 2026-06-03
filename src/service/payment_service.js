@@ -14,7 +14,7 @@ export const paymentService = {
     
     // 1. Generate ID internal & order_id unik untuk Pakasir
     const paymentId = crypto.randomUUID();
-    const orderId = `INV-${paymentId.slice(0, 8).toUpperCase()}-${Date.now().toString().slice(-4)}`;
+    const orderId = `ECC-${paymentId.slice(0, 8).toUpperCase()}-${Date.now().toString().slice(-4)}`;
 
     // 2. Tembak API Pakasir untuk mendapatkan string QRIS
     const response = await fetch('https://app.pakasir.com/api/transactioncreate/qris', {
