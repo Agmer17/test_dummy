@@ -10,6 +10,8 @@ import readingRouter from './reading.controller.js';
 import readingProgressRouter from './reading_progress.controller.js';
 import folderRouter from './folder.controller.js';
 import materialRouter from './material.controller.js';
+import studentRouter from './student.controller.js';
+import sessionRouter from './session.controller.js';
 
 const router = Router();
 
@@ -24,6 +26,8 @@ router.use("/reading-drills", readingRouter);
 router.use("/user-reading-progress", readingProgressRouter);
 router.use("/folders", folderRouter);
 router.use("/materials", materialRouter);
+router.use("/students", studentRouter);
+router.use("/sessions", sessionRouter);
 
 
 router.get("/", async (req, res) => {
