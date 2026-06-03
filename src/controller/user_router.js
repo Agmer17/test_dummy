@@ -56,7 +56,7 @@ router.get('/all', async (req, res) => {
 });
 
 // GET /api/users/:id -> Ambil profil spesifik
-router.get('/:id', async (req, res) => {
+router.get('/id/:id', async (req, res) => {
   try {
     const profile = await userService.getProfileById(req.params.id);
     res.json({ success: true, data: profile });
@@ -66,7 +66,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // PATCH /api/users/:id -> Admin bebas ubah data termasuk role
-router.patch('/:id', async (req, res) => {
+router.patch('/update/:id', async (req, res) => {
   try {
     const updatedProfile = await userService.updateProfileByAdmin(req.params.id, req.body);
     res.json({ success: true, data: updatedProfile });
@@ -76,7 +76,7 @@ router.patch('/:id', async (req, res) => {
 });
 
 // DELETE /api/users/:id -> Hapus user dari sistem sepenuhnya
-router.delete('/:id', async (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
   try {
     await userService.deleteUserFull(req.params.id);
     res.json({ success: true, message: 'User beserta profilnya berhasil dihapus' });
