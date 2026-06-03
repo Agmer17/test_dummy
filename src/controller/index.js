@@ -1,14 +1,15 @@
 import { Router } from 'express';
-// Gunakan default import karena di filenya kamu pakai 'export default router'
-import lessonRouter from './lesson.controller.js'; 
+import lessonRouter from './lesson.controller.js'; // ini udah bener, filenya ada
 import userRouter from './user_router.js';
 
 const router = Router();
 
-// Hati-hati dengan penamaan path di sini!
-router.use("/curriculum-lessons", lessonRouter);
-
-// user endpoint 
+router.use("/curriculum-lessons", lessonRouter); // prefix di sini
 router.use("/user", userRouter);
+
+
+router.get("/", async (req, res) => {
+    res.json({message : "hello"})
+})
 
 export default router;

@@ -46,6 +46,7 @@ router.use(requireAdmin);
 
 // GET /api/users -> Ambil semua profil
 router.get('/all', async (req, res) => {
+  console.log(req.path)
   try {
     const profiles = await userService.getAllProfiles();
     res.json({ success: true, data: profiles });
