@@ -58,7 +58,7 @@ router.post('/', async (req, res) => {
 router.use(requireAdmin);
 
 // DELETE /api/reviews/:id -> Hapus review (Admin)
-router.delete('/:id', async (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
   try {
     const deletedReview = await reviewService.deleteReviewByAdmin(req.params.id);
     

@@ -73,13 +73,42 @@ export const userService = {
     return data;
   },
 
-  async deleteUserFull(id) {
-    // PENTING: Karena di migrasi lu ada 'references auth.users on delete cascade',
-    // cara paling bener buat hapus user adalah hapus dari auth bawaan Supabase.
-    // Otomatis row di tabel profiles bakal ikut kehapus.
-    const { data, error } = await supabaseAdmin.auth.admin.deleteUser(id);
+  async deleteUserFull(userId) {
+    // 1. Hapus data dependen duluan biar aman dari Foreign Key constraint error
+    // (Persis kayak script Next.js lu)
     
-    if (error) throw error;
-    return data;
+    // Hapus Subscriptions
+    const { error: subError } = await supabaseAdmin
+      .from('subscriptions')
+      .delete()
+      .eq('user_id', userId);
+    if (subError) console.error('Subscription deletion warning:', subError);
+
+    // Hapus Sessions
+    const { error: sessionError } = await supabaseAdmin
+      .from('sessions')
+      .delete()
+      .eq('user_id', userId);
+    if (sessionError) console.error('Session deletion warning:', sessionError);
+
+    // Hapus Students
+    const { error: studentError } = await supabaseAdmin
+      .from('students')
+      .delete()
+      .eq('user_id', userId);
+    if (studentError) console.error('Student deletion warning:', studentError);
+
+    // Hapus Profiles
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+    if (profileError) console.error('Profile deletion warning:', profileError);
+
+    // 2. Terakhir, hapus user dari Supabase Auth secara permanen
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    if (authError) throw authError;
+
+    return { success: true };
   }
 };
