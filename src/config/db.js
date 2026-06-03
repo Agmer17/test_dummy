@@ -4,7 +4,7 @@ dotenv.config();
 
 export const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGODB_URI, { dbName: process.env.MONGO_DB });
     console.log('Terhubung ke database omongin');
   } catch (error) {
     console.error('Gagal konek database:', error.message);

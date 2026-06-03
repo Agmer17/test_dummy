@@ -8,6 +8,8 @@ import packageRouter from "./package_router.js";
 import subscriptionRouter from "./subscription_router.js";
 import readingRouter from './reading.controller.js';
 import readingProgressRouter from './reading_progress.controller.js';
+import folderRouter from './folder.controller.js';
+import materialRouter from './material.controller.js';
 
 const router = Router();
 
@@ -20,6 +22,8 @@ router.use("/package", packageRouter)
 router.use("/subscription", subscriptionRouter)
 router.use("/reading-drills", readingRouter);
 router.use("/user-reading-progress", readingProgressRouter);
+router.use("/folders", folderRouter);
+router.use("/materials", materialRouter);
 
 
 router.get("/", async (req, res) => {
