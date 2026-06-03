@@ -1,6 +1,11 @@
+import express from 'express';
 import * as lessonService from '../service/lesson.service.js';
+// import { requireAuth, requireAdmin } from '../middleware/auth.js'; // Un-comment ini kalau butuh proteksi Auth nanti
 
-export const getAllLessons = async (req, res) => {
+const router = express.Router();
+
+// 1. GET ALL
+router.get('/', async (req, res) => {
   try {
     const lessons = await lessonService.getAllLessons();
     res.status(200).json({
@@ -11,9 +16,10 @@ export const getAllLessons = async (req, res) => {
   } catch (error) {
     res.status(500).json({ pesan: "Gagal mengambil data", error: error.message });
   }
-};
+});
 
-export const getLessonById = async (req, res) => {
+// 3. GET BY ID
+router.get('/id/:id', async (req, res) => {
   try {
     const lesson = await lessonService.getLessonById(req.params.id);
     
@@ -25,22 +31,10 @@ export const getLessonById = async (req, res) => {
   } catch (error) {
     res.status(500).json({ pesan: "Gagal mengambil data", error: error.message });
   }
-};
+});
 
-export const getAllLessonsLegacy = async (req, res) => {
-  try {
-    const lesson = await lessonService.getAllLessons();
-    if (!lesson) {
-      return res.status(404).json({ pesan: "Data tidak ditemukan" });
-    }
-    
-    res.status(200).json(lesson);
-  } catch (error) {
-    res.status(500).json({ pesan: "Gagal mengambil data", error: error.message });
-  }
-};
-
-export const createLesson = async (req, res) => {
+// 4. POST (Create)
+router.post('/', async (req, res) => {
   try {
     const newLesson = await lessonService.createLesson(req.body);
     
@@ -54,9 +48,10 @@ export const createLesson = async (req, res) => {
       data: null
     });
   }
-};
+});
 
-export const updateLesson = async (req, res) => {
+// 5. PUT (Update)
+router.put('/update/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const updatedLesson = await lessonService.updateLesson(id, req.body);
@@ -79,9 +74,10 @@ export const updateLesson = async (req, res) => {
       data: null
     });
   }
-};
+});
 
-export const deleteLesson = async (req, res) => {
+// 6. DELETE (Delete)
+router.delete('/delete/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const deletedLesson = await lessonService.deleteLesson(id);
@@ -104,4 +100,6 @@ export const deleteLesson = async (req, res) => {
       data: null
     });
   }
-};
+});
+
+export default router;

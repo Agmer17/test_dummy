@@ -1,24 +1,14 @@
 import { Router } from 'express';
-import * as lessonController from './lesson.controller.js';
+// Gunakan default import karena di filenya kamu pakai 'export default router'
+import lessonRouter from './lesson.controller.js'; 
+import userRouter from './user_router.js';
 
 const router = Router();
 
-// 1. GET ALL
-router.get('/curriculum-lessons', lessonController.getAllLessons);
+// Hati-hati dengan penamaan path di sini!
+router.use("/curriculum-lessons", lessonRouter);
 
-// GET ALL LEGACY (as per user request)
-router.get('/get-all/curriculum-lessons', lessonController.getAllLessonsLegacy);
-
-// 2. GET BY ID
-router.get('/curriculum-lessons/:id', lessonController.getLessonById);
-
-// 3. POST (Create)
-router.post('/curriculum-lessons', lessonController.createLesson);
-
-// 4. PUT (Update)
-router.put('/curriculum-lessons/:id', lessonController.updateLesson);
-
-// 5. DELETE (Delete)
-router.delete('/curriculum-lessons/:id', lessonController.deleteLesson);
+// user endpoint 
+router.use("/user", userRouter);
 
 export default router;
